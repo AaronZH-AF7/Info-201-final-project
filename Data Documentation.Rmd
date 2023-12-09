@@ -1,0 +1,243 @@
+---
+title: "Data Documentation"
+author: "David Lv, Jessie Lu"
+date: "2023-12-08"
+output: html_document
+---
+
+Our two original datasets are transcribed from original paper-based crime reports. It includes all the crimes and arrests that happened in Los Angeles. They are presented in CSV file format for easy access and analysis. The Los Angeles Police Department (LAPD) is responsible for the collection of both datasets, and it is published by the City of Los Angeles. Both datasets are non-federal and publicly accessible, falling under the Creative Commons Public Domain Dedication (CC0). This means there are minimal restrictions on access and usage. The datasets are freely available to everyone, with no restrictions on access or purpose, including commercial use.
+Our Original Data Set was found on Data. Gov. Our first original dataset is "Crime-data-from-2010-to-2019". This dataset reflects incidents of crime in the City of Los Angeles from 2010 – 2019. These datasets have a large amount of effective information about the victim's gender and age, reporting date, crime type, and crime area. our crime reporting dataset includes variables "DR Number","Date Reported","Time Occurred","Area Name", "Crime Code Description", "Victim Age", "Victim Sex", "Victim Descent", "Premise Description", "Status Description", "Location”. 
+Here is a link to our original dataset, "The Dataset of Crime": https://catalog.data.gov/dataset/crime-data-from-2010-to-2019
+
+Our second original dataset is "Arrest-data-from-2010-to-2019". This dataset of arrest reporting reflects arrest incidents in the City of Los Angeles from 2010 to 2019. This dataset includes variables "Report ID", "Report Type", "Arrest Date", "Time", "Area Name", , "Age", "Sex Code", "Descent Code", "Charge Group Description", "Disposition Description", "Address", "Location". 
+Here is a link to our original dataset, "The Dataset of Crime": https://catalog.data.gov/dataset/arrest-data-from-2010-to-2019 
+Our crime reporting dataset comprises 2,135,657 rows, 28 columns, and x number of missing/otherwise invalid values by each column. Similarly, our arrest reporting dataset contains 1,320,983 rows, 25 columns, and x number of missing/otherwise invalid values by each column.
+For our "clean" dataset, we merged the Crime reporting dataset and arrest reporting dataset based on the "report ID" attribute. However, due to an incomplete recording of the report ID across both datasets, we ultimately refined our data to include 1,161 rows and 22 columns, ensuring that this subset is free from any missing or invalid values.
+
+Here are some results we get from our “clean” dataset:
+
+```{r,echo=FALSE}
+library(tidyverse)
+library(ggplot2)
+library(lubridate)
+library(IRdisplay)
+```
+
+```{r,echo=FALSE}
+##  load data - crime data and arrest data
+crime_2010_2019<-read_delim("C:/Users/11499/Desktop/info 201/project/Crime_Data_from_2010_to_2019.csv")
+
+arrest_2010_2019<-read_delim("C:/Users/11499/Desktop/info 201/project/Arrest_Data_from_2010_to_2019.csv")
+
+## select the columns that we needs
+crime_2010_2019 <- crime_2010_2019 %>% select("DR_NO", "Date Rptd", "TIME OCC", "AREA NAME", "Crm Cd Desc", "Vict Age", "Vict Sex", "Vict Descent", "Premis Desc", "Status Desc", "LOCATION")
+
+arrest_2010_2019 <- arrest_2010_2019 %>% select("Report ID", "Report Type", "Arrest Date", "Time", "Area Name", , "Age", "Sex Code", "Descent Code", "Charge Group Description", "Disposition Description", "Address", "Location")
+
+# Combine data with the key report ID and DR_NO
+arrest_2010_2019$"Report ID" <- as.character(arrest_2010_2019$"Report ID")
+
+combine <- crime_2010_2019 %>% inner_join(arrest_2010_2019, by = c("DR_NO" = "Report ID"))
+
+# Clean the data
+combine <- na.omit(combine)
+
+```
+
+## Find the top 5 of the crime type
+```{r,echo=FALSE}
+## Find the top 5 of the crime type
+crime_data <- combine %>% 
+  group_by(`Crm Cd Desc`) %>% 
+  summarise(Frequency = n()) %>% 
+  arrange(desc(Frequency)) %>% 
+  head(5)
+
+crime_data %>%
+  mutate(`Crm Cd Desc` = reorder(`Crm Cd Desc`, Frequency)) %>%
+  ggplot(aes(x = "", y = Frequency, fill = `Crm Cd Desc`)) +
+  geom_bar(stat = "identity", width = 5) +
+  coord_polar("y", start = 0) +
+  scale_fill_manual(values = c("red", "green", "purple", "yellow", "pink")) +
+  theme_void() +
+  theme(legend.position = "right") +
+  labs(fill = "Crime Type",title ="Top 5 Crime Type") +
+  geom_text(aes(label = paste0(round((Frequency/sum(Frequency))*100, 1), "%")), position = position_stack(vjust = 0.5))
+```
+
+The pie shows the distribution of the top 5 types of crime from 2010 to 2019. Shoplifting - Petty ($950 & under) is the most common crime type, constituting 69% of the total crimes. The color associated with this category on the chart is pink. Theft Plain - Petty ($950 & under), represented by yellow, constituting 28.6% of the total crimes. Battery - Simple Assault, represented in blue; this crime type constitutes 1.4% of total crimes. Intimate Partner - Simple Assault, shown in green, constitutes 0.94% of all crimes. Lastly, the other Miscellaneous Crime category is at 1.19%, shown in red on the chart. 
+
+## Top 3 area that the crimes happened
+```{r,echo=FALSE}
+## Top 3 area that the crimes happened:
+region_Top3<- head(sort(table(combine$`AREA NAME`), decreasing = TRUE), 3)
+
+region_Top3 <- data.frame(region_Top3)
+
+region_Top3 %>%
+  mutate(Var1 = reorder(Var1, Freq)) %>%
+  ggplot(aes(x = "", y = Freq, fill = Var1)) +
+  geom_bar(stat = "identity", width = 1) +
+  coord_polar("y", start = 0) +
+  scale_fill_manual(values = c("red", "yellow", "lightblue")) + 
+  theme_void() +
+  theme(legend.position = "right") +
+  labs(fill = "Region", title = "Top 3 Area that Crime Happened") +
+  geom_text(aes(label = paste0(round((Freq/sum(Freq))*100, 1), "%")), position = position_stack(vjust = 0.5))
+```
+
+Topanga Region: The vast majority of crimes, 93.8%, occurred in the Topanga region, depicted in light blue. This region dominates the chart, indicating it is the area with the highest crime count in the dataset. Harbor Region, represented in yellow, this region accounts for a second large portion of the crimes, specifically 4.9%. West LA Region, this region has the third large visible share of crimes, shown in red, with a percentage of 1.3% portion of the crimes. The chart clearly indicates a significant concentration of crime in the Topanga region compared to the other two regions.
+
+## The Topanga total crime map
+
+```{r,echo=FALSE}
+##The Topanga total crime map
+library(magick)
+The_Topanga_Total_Crime_Map <- image_read("C:/Users/11499/Desktop/3.PNG.png")
+plot(The_Topanga_Total_Crime_Map)
+```
+
+According to the crime map, more issues arise with places like airports, parks, and schools. Major airports, of which Topanga has 0, always look like high-crime locations due to the large number of people and the low population nearby. Parks and designated recreational areas, of which Topanga has 2, have the same problem. Of Topanga’s 7,061 residents, few live near recreational areas. Because many people visit, crime rates may appear higher even for safe parks. Ultimately, crime happens where people are, whether they live there or not. Before writing off an area as unsafe, look at both the crime rate and total crime maps, then consider nearby destinations that people may be visiting.
+
+## Victims age distribution
+
+```{r,echo=FALSE}
+## Victims age distribution
+## filter out all the victim ages equal to 0:
+age_Data <- combine %>% filter(`Vict Age` != 0)
+
+## make the plot
+ggplot(age_Data, aes(x = `Vict Age`)) +
+  geom_histogram(binwidth = 5, fill = "red", color = "black") +
+  labs(x = "Victim Age", y = "Count", title ="Victim Age Distribution")
+```
+
+The victim's age ranges from 15 to 75, with a focus on 20 to 30. We assume that people in these pages are more likely to engage in risk-taking behavior or be involved in activities that can increase their exposure to crime.
+
+## Arrest age distribution
+
+```{r,echo=FALSE}
+##Arrest age distribution
+## filter out all the victim ages equal to 0:
+age_Data <- combine %>% filter(`Age` != 0)
+
+## make the plot
+ggplot(age_Data, aes(x = `Age`)) +
+  geom_histogram(binwidth = 5, fill = "red", color = "black") +
+  labs(x = "Age", y = "Count", title ="Arrest Age Distribution")
+```
+
+We analyze that people aged 18 have a higher rate of crime, which corresponds to a higher rate of arrest. The age of 18 represents a critical developmental stage where individuals often undergo transitions from adolescence to adulthood. These transitions, such as entering the workforce or pursuing higher education, can influence exposure to various social and environmental factors that may contribute to criminal behavior.
+
+## Victim Sex Distribution
+
+```{r,echo=FALSE}
+##filter out all the X value
+sex_data <- combine %>%
+  filter(`Vict Sex` != "X") %>%
+  group_by(`Vict Sex`) %>%
+  summarise(count = n(), .groups = 'drop') %>%
+  mutate(percentage = count / sum(count) * 100)
+
+## make the pie chart
+  ggplot(sex_data, aes(x = "", y = percentage, fill = `Vict Sex`)) +
+  geom_bar(width = 1, stat = "identity") +
+  coord_polar("y", start = 0) +
+  labs(x = "", y = "Percentage", title = "Victim Sex Distribution", fill = "Victim Sex") +
+  geom_text(aes(label = paste0(round(percentage, 1), "%")), position = position_stack(vjust = 0.5))
+```
+
+## Arrest sex distribution
+
+```{r,echo=FALSE}
+## count for each sex and filter out all the X value
+sex_data <- combine %>%
+  filter(`Sex Code` != "X") %>%
+  group_by(`Sex Code`) %>%
+  summarise(count = n(), .groups = 'drop') %>%
+  mutate(percentage = count / sum(count) * 100)
+
+## make the pie chart
+  ggplot(sex_data, aes(x = "", y = percentage, fill = `Sex Code`)) +
+  geom_bar(width = 1, stat = "identity") +
+  coord_polar("y", start = 0) +
+  labs(x = "", y = "Percentage", title = "Arrest Sex Distribution", fill = "Sex Code") +
+  geom_text(aes(label = paste0(round(percentage, 1), "%")), position = position_stack(vjust = 0.5)) 
+```
+Our last result is about sex both in crime reporting and arrest reporting. We can notice that male is more likely to be victims than females, and have a lower rate of arrest than females as well. In these two pie charts we can see that the first one is Victims Sex Distribution, with 78.8% male and 21.2% female. The second one is Arrest Sex Distribution, with 38.7% male and 61.3% female.
+Furthermore, we connect different columns in our combined dataset to produce additional graphs. 
+In general, we expect that females are more likely to be victims. However, based on our datasets, we found that victims are concentrating on males rather than females. In the arrest sex distribution, female represents a higher rate of arrest, which corresponds to our victim sex distribution. We can infer that males are tended to be robbed by females. It is a surprising result because of our method. In selecting data, we only selected people who committed crimes and were arrested by LA police. Thus, we can see that the arrested sex is higher in females than males; we cannot have a relatively reliable result on gender here.
+
+### Victim sex in top crime area
+
+```{r,echo=FALSE}
+## Victim sex in top crime rate area
+combine%>%
+  filter(`AREA NAME` %in% c('Topanga','West LA','Harbor') & !`Vict Sex` %in% c('X','H'))%>%
+  group_by(`AREA NAME`)%>%
+  count(`Vict Sex`)%>%
+  mutate(prop = n/sum(n))%>%
+  ggplot(aes('',prop, fill=`Vict Sex`))+
+  geom_bar(stat='identity', color = 'white')+
+  labs(title='Victim Sex distribution',
+       subtitle='Except Southeast, Male victims are more than female in other regions',
+       x='Sex',
+       y='Numbers of Victim Sex')+
+  theme_bw()+
+  coord_polar('y')+
+  facet_wrap(~`AREA NAME`, nrow=1)
+```
+
+The image depicts three pie charts, each representing the sex distribution of arrests in three different regions: Harbor, Topanga, and West LA. In Harbor, 64% of arrests were of males, while 36% were of females (depicted in red). In Topanga, the distribution is identical to Harbor, with males accounting for 62% of arrests and females 38%. West LA also shows similar distribution, with 71% of arrests being males and 29% females. From these pie charts, we are able to not only see clearly the distribution of sex in
+these three region with highest crime rates, but also variation on sex.
+
+## Arrest sex in top crime area
+
+```{r,echo=FALSE}
+## Arrest sex in top crime rate area
+combine%>%
+  filter(`AREA NAME` %in% c('Topanga','West LA','Harbor') & !`Vict Sex` %in% c('X','H'))%>%
+  group_by(`AREA NAME`)%>%
+  count(`Sex Code`)%>%
+  mutate(prop = n/sum(n))%>%
+  ggplot(aes('',prop, fill=`Sex Code`))+
+  geom_bar(stat='identity', color = 'white')+
+  labs(title='Arrest Sex distribution',
+       x='Arrest Sex',
+       y='Percentage in 3 top crime area')+
+  theme_bw()+
+  coord_polar('y')+
+  facet_wrap(~`AREA NAME`, nrow=1)
+```
+
+These three pie charts depict three regions—Harbor, Topanga, and West LA—illustrating the distribution of crime victims by sex. The chart shows that in Harbor, the majority of victims are male (depicted in cyan), accounting for approximately 90%, while female victims (depicted in red) constitute about 10%. The distribution of Topanga with male victims at roughly 78% and female victims at about 22%. West LA, with female victims representing a larger proportion, around 28%, and male victims at approximately 72%.
+
+### Sex match
+
+```{r,echo=FALSE}
+# using the mutate function from dplyr
+combine <- dplyr::mutate(combine, Sex_Match = ifelse(`Vict Sex` == `Sex Code`, "Same Sex", "Different Sex"))
+
+# calculus the percentage
+count_data <- combine %>%
+                group_by(Sex_Match) %>%
+                summarise(n = n()) %>%
+                mutate(percentage = n / sum(n))
+
+# plot the pie chart
+ggplot(count_data, aes(x = "", y = n, fill = Sex_Match)) +
+  geom_bar(stat = "identity", width = 1, color = "white") +
+  coord_polar("y", start = 0) +
+  geom_text(aes(label = paste0(round(percentage*100), "%")), 
+            position = position_stack(vjust = 0.5)) +
+  labs(x = NULL, y = NULL, fill = NULL, 
+       title = "Pie chart of Sex_Match") +
+  theme_classic() +
+  theme(axis.line = element_blank(),
+        axis.text = element_blank(),
+        axis.ticks = element_blank())
+```
+
+This pie chart represents the "Sex_Match" distribution, likely referring to a comparison of gender in a certain context, related to crime reports or arrests. The chart is divided into two categories: Same Sex, shown in cyan, makes up the majority of the chart at 52%. This indicates that in over half of the cases, individuals involved were of the same sex. Different Sex, represented in red, this category comprises 48% of the chart. This shows that just under half of the cases involved individuals of different sexes.
+
+
