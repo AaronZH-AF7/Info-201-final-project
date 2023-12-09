@@ -9,5 +9,5 @@ law enforcement strategies, and societal responses to crime, which contribute to
 In our combined datasets, we added a new column named “Arrest day" as a numerical  variable in our combined dataset, which represents the difference between crime reporting and arrest reporting. Besides, we added a new categorical variable named “Sex Match”, which shows whether crime-reporting sex and arresting-report sex are the same. From the results, we can conclude that the most popular type of crime happened among the same sex or different sex. Each row represents each crime that is being arrested by the LAPD. These rows will contain the crime reporting date, arrest date, victim's sex, age, and area, and arrest sex, age and area. In sum, we can have the relevant information about victims and criminals.
 The relevant variables directly correlated to our following results are “Crime Type”, “Crime Area”, “Crime Age”, “Arrest Age”, “Crime Sex” and “Crime Sex”. 
 
-
+![figure](https://github.com/AaronZH-AF7/Info-201-final-project/assets/153350502/55e559aa-0b0e-455b-a097-88c5e2b5fa93)
 
